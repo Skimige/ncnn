@@ -81,7 +81,9 @@ size_t DataReaderFromMemory::read(void* buf, size_t size) const
 }
 
 #if __ANDROID_API__ >= 9
-DataReaderFromAndroidAsset::DataReaderFromAndroidAsset(AAsset* _asset) : asset(_asset), mem(0)
+#if NOT_TERMUX
+DataReaderFromAndroidAsset::DataReaderFromAndroidAsset(AAsset* _asset)
+    : asset(_asset), mem(0)
 {
 }
 
@@ -128,6 +130,7 @@ size_t DataReaderFromAndroidAsset::read(void* buf, size_t size) const
 
     return nread;
 }
+#endif // NOT_TERMUX
 #endif // __ANDROID_API__ >= 9
 
 } // namespace ncnn
