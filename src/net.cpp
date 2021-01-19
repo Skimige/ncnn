@@ -1904,7 +1904,6 @@ int Net::load_param(AAssetManager* mgr, const char* assetpath)
     return ret;
 }
 #endif // NCNN_STRING
-#endif // NOT_TERMUX
 
 int Net::load_param_bin(AAsset* asset)
 {
@@ -1945,6 +1944,7 @@ int Net::load_model(AAssetManager* mgr, const char* assetpath)
     AAsset_close(asset);
     return ret;
 }
+#endif // NOT_TERMUX
 #endif // __ANDROID_API__ >= 9
 #endif // NCNN_PLATFORM_API
 
