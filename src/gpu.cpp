@@ -30,6 +30,8 @@
 #include "mat.h"
 #include "pipelinecache.h"
 
+// There is known issue that vkDestroyDebugUtilsMessengerEXT crash on exit when vulkan validation layer enabled
+// upstream fix https://github.com/KhronosGroup/Vulkan-Loader/pull/539
 #define ENABLE_VALIDATION_LAYER 0
 
 namespace ncnn {
@@ -43,6 +45,9 @@ public:
     __ncnn_vulkan_instance_holder()
     {
         instance = 0;
+#if ENABLE_VALIDATION_LAYER
+        callback = 0;
+#endif
     }
 
     ~__ncnn_vulkan_instance_holder()
@@ -56,6 +61,9 @@ public:
     }
 
     VkInstance instance;
+#if ENABLE_VALIDATION_LAYER
+    VkDebugUtilsMessengerEXT callback;
+#endif
 };
 static __ncnn_vulkan_instance_holder g_instance;
 
@@ -639,8 +647,6 @@ static int init_instance_extension()
 }
 
 #if ENABLE_VALIDATION_LAYER
-static VkDebugUtilsMessengerEXT callback;
-
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
     VkDebugUtilsMessageTypeFlagsEXT /*messageType*/,
@@ -652,7 +658,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback)
+static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback)
 {
     PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func)
@@ -661,7 +667,7 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
     return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator)
+static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator)
 {
     PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func)
@@ -862,6 +868,10 @@ int create_gpu_instance()
         {
             enabledLayers.push_back("VK_LAYER_LUNARG_parameter_validation");
         }
+        if (strcmp(lp.layerName, "VK_LAYER_KHRONOS_validation") == 0)
+        {
+            enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+        }
     }
 #endif // ENABLE_VALIDATION_LAYER
 
@@ -981,7 +991,7 @@ int create_gpu_instance()
         createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback = debugCallback;
         createInfo.pUserData = 0;
-        ret = CreateDebugUtilsMessengerEXT(g_instance, &createInfo, NULL, &callback);
+        ret = CreateDebugUtilsMessengerEXT(g_instance, &createInfo, NULL, &g_instance.callback);
         if (ret != VK_SUCCESS)
         {
             NCNN_LOGE("CreateDebugUtilsMessengerEXT failed %d", ret);
@@ -1382,12 +1392,12 @@ int create_gpu_instance()
 
             if (gpu_info.support_VK_KHR_8bit_storage)
             {
-                gpu_info.support_int8_storage = query8BitStorageFeatures.storageBuffer8BitAccess && query8BitStorageFeatures.uniformAndStorageBuffer8BitAccess;
+                gpu_info.support_int8_storage = query8BitStorageFeatures.storageBuffer8BitAccess;
             }
             if (gpu_info.support_VK_KHR_16bit_storage && queryFeatures.features.shaderStorageImageExtendedFormats)
             {
                 // shaderStorageImageExtendedFormats enables r16f format in storage image
-                gpu_info.support_fp16_storage = query16BitStorageFeatures.storageBuffer16BitAccess && query16BitStorageFeatures.uniformAndStorageBuffer16BitAccess;
+                gpu_info.support_fp16_storage = query16BitStorageFeatures.storageBuffer16BitAccess;
             }
             if (gpu_info.support_VK_KHR_shader_float16_int8)
             {
@@ -1406,7 +1416,7 @@ int create_gpu_instance()
             //             vkGetPhysicalDeviceFeatures(physicalDevice, &features);
         }
 
-        if (physicalDeviceProperties.vendorID == 0x13b5)
+        if (physicalDeviceProperties.vendorID == 0x13b5 && physicalDeviceProperties.apiVersion < VK_MAKE_VERSION(1, 0, 82))
         {
             // the 16bit_storage implementation of arm mali driver is buggy :[
             gpu_info.support_fp16_storage = false;
@@ -1476,7 +1486,8 @@ void destroy_gpu_instance()
 #if ENABLE_VALIDATION_LAYER
     if (support_VK_EXT_debug_utils)
     {
-        DestroyDebugUtilsMessengerEXT(g_instance, callback, NULL);
+        DestroyDebugUtilsMessengerEXT(g_instance, g_instance.callback, NULL);
+        g_instance.callback = 0;
     }
 #endif // ENABLE_VALIDATION_LAYER
 
@@ -1819,7 +1830,7 @@ VulkanDevice::VulkanDevice(int device_index)
     enabled8BitStorageFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
     enabled8BitStorageFeatures.pNext = 0;
     enabled8BitStorageFeatures.storageBuffer8BitAccess = info.support_int8_storage();
-    enabled8BitStorageFeatures.uniformAndStorageBuffer8BitAccess = info.support_int8_storage();
+    enabled8BitStorageFeatures.uniformAndStorageBuffer8BitAccess = VK_FALSE;
     enabled8BitStorageFeatures.storagePushConstant8 = VK_FALSE;
     if (support_VK_KHR_get_physical_device_properties2 && info.support_VK_KHR_8bit_storage())
     {
@@ -1832,7 +1843,7 @@ VulkanDevice::VulkanDevice(int device_index)
     enabled16BitStorageFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR;
     enabled16BitStorageFeatures.pNext = 0;
     enabled16BitStorageFeatures.storageBuffer16BitAccess = info.support_fp16_storage();
-    enabled16BitStorageFeatures.uniformAndStorageBuffer16BitAccess = info.support_fp16_storage();
+    enabled16BitStorageFeatures.uniformAndStorageBuffer16BitAccess = VK_FALSE;
     enabled16BitStorageFeatures.storagePushConstant16 = VK_FALSE;
     enabled16BitStorageFeatures.storageInputOutput16 = VK_FALSE;
     if (support_VK_KHR_get_physical_device_properties2 && info.support_VK_KHR_16bit_storage())
@@ -3234,9 +3245,9 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
             custom_defines.push_back(std::make_pair("image1d_ld1(tex,p)", "float16_t(texelFetch(tex,p,0).r)"));
             custom_defines.push_back(std::make_pair("image2d_ld1(tex,p)", "float16_t(texelFetch(tex,p,0).r)"));
             custom_defines.push_back(std::make_pair("image3d_ld1(tex,p)", "float16_t(texelFetch(tex,p,0).r)"));
-            custom_defines.push_back(std::make_pair("image1d_st1(img,p,v)", "{f16vec4 _v;_v.r=float16_t(v);imageStore(img,p,_v);}"));
-            custom_defines.push_back(std::make_pair("image2d_st1(img,p,v)", "{f16vec4 _v;_v.r=float16_t(v);imageStore(img,p,_v);}"));
-            custom_defines.push_back(std::make_pair("image3d_st1(img,p,v)", "{f16vec4 _v;_v.r=float16_t(v);imageStore(img,p,_v);}"));
+            custom_defines.push_back(std::make_pair("image1d_st1(img,p,v)", "{vec4 _v;_v.r=float(v);imageStore(img,p,_v);}"));
+            custom_defines.push_back(std::make_pair("image2d_st1(img,p,v)", "{vec4 _v;_v.r=float(v);imageStore(img,p,_v);}"));
+            custom_defines.push_back(std::make_pair("image3d_st1(img,p,v)", "{vec4 _v;_v.r=float(v);imageStore(img,p,_v);}"));
             custom_defines.push_back(std::make_pair("image1d_cp1(img,p,tex,sp)", "{imageStore(img,p,texelFetch(tex,sp,0));}"));
             custom_defines.push_back(std::make_pair("image2d_cp1(img,p,tex,sp)", "{imageStore(img,p,texelFetch(tex,sp,0));}"));
             custom_defines.push_back(std::make_pair("image3d_cp1(img,p,tex,sp)", "{imageStore(img,p,texelFetch(tex,sp,0));}"));
