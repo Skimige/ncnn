@@ -14,6 +14,8 @@ $ git submodule update --init
 * [Build for Android](#build-for-android)
 * [Build for iOS on MacOS with xcode](#build-for-ios-on-macos-with-xcode)
 * [Build for WebAssembly](#build-for-webassembly)
+* [Build for AllWinner D1](#build-for-allwinner-d1)
+* [Build for Loongson 2K1000](#build-for-loongson-2k1000)
 
 ***
 
@@ -43,7 +45,7 @@ tar -xf vulkansdk-linux-x86_64-1.2.154.0.tar.gz
 export VULKAN_SDK=$(pwd)/1.2.154.0/x86_64
 ```
 
-To use Vulkan after building ncnn later, you will also need to have Vulkan driver for your GPU. For AMD and Intel GPUs these can be found in Mesa graphics driver, which usually is installed by default on all distros (i.e. `sudo apt install mesa-vulkan-drivers` on Debian/Ubuntu). For Nvidia GPUs the propietary Nvidia driver must be downloaded and installed (some distros will allow easier installation in some way). After installing Vulkan driver, confirm Vulkan libraries and driver are working, by using `vulkaninfo` or `vulkaninfo | grep deviceType`, it should list GPU device type. If there are more than one GPU installed (including the case of integrated GPU and discrete GPU, commonly found in laptops), you might need to note the order of devices to use later on.
+To use Vulkan after building ncnn later, you will also need to have Vulkan driver for your GPU. For AMD and Intel GPUs these can be found in Mesa graphics driver, which usually is installed by default on all distros (i.e. `sudo apt install mesa-vulkan-drivers` on Debian/Ubuntu). For Nvidia GPUs the proprietary Nvidia driver must be downloaded and installed (some distros will allow easier installation in some way). After installing Vulkan driver, confirm Vulkan libraries and driver are working, by using `vulkaninfo` or `vulkaninfo | grep deviceType`, it should list GPU device type. If there are more than one GPU installed (including the case of integrated GPU and discrete GPU, commonly found in laptops), you might need to note the order of devices to use later on.
 
 Nvidia Jetson devices the Vulkan support should be present in Nvidia provided SDK (Jetpack) or prebuild OS images.
 
@@ -515,7 +517,7 @@ Build without any extension for general compatibility:
 mkdir -p build
 cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-    -DNCNN_THREADS=OFF -DNCNN_OPENMP=OFF -DNCNN_SIMPLEOMP=OFF -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=OFF -DNCNN_AVX2=OFF \
+    -DNCNN_THREADS=OFF -DNCNN_OPENMP=OFF -DNCNN_SIMPLEOMP=OFF -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=OFF -DNCNN_AVX2=OFF -DNCNN_AVX=OFF \
     -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_BENCHMARK=OFF ..
 cmake --build . -j 4
 cmake --build . --target install
@@ -526,7 +528,7 @@ Build with WASM SIMD extension:
 mkdir -p build-simd
 cd build-simd
 cmake -DCMAKE_TOOLCHAIN_FILE=../emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-    -DNCNN_THREADS=OFF -DNCNN_OPENMP=OFF -DNCNN_SIMPLEOMP=OFF -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=ON -DNCNN_AVX2=OFF \
+    -DNCNN_THREADS=OFF -DNCNN_OPENMP=OFF -DNCNN_SIMPLEOMP=OFF -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=ON -DNCNN_AVX2=OFF -DNCNN_AVX=OFF \
     -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_BENCHMARK=OFF ..
 cmake --build . -j 4
 cmake --build . --target install
@@ -537,7 +539,7 @@ Build with WASM Thread extension:
 mkdir -p build-threads
 cd build-threads
 cmake -DCMAKE_TOOLCHAIN_FILE=../emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-    -DNCNN_THREADS=ON -DNCNN_OPENMP=ON -DNCNN_SIMPLEOMP=ON -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=OFF -DNCNN_AVX2=OFF \
+    -DNCNN_THREADS=ON -DNCNN_OPENMP=ON -DNCNN_SIMPLEOMP=ON -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=OFF -DNCNN_AVX2=OFF -DNCNN_AVX=OFF \
     -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_BENCHMARK=OFF ..
 cmake --build . -j 4
 cmake --build . --target install
@@ -548,10 +550,61 @@ Build with WASM SIMD and Thread extension:
 mkdir -p build-simd-threads
 cd build-simd-threads
 cmake -DCMAKE_TOOLCHAIN_FILE=../emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-    -DNCNN_THREADS=ON -DNCNN_OPENMP=ON -DNCNN_SIMPLEOMP=ON -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=ON -DNCNN_AVX2=OFF \
+    -DNCNN_THREADS=ON -DNCNN_OPENMP=ON -DNCNN_SIMPLEOMP=ON -DNCNN_RUNTIME_CPU=OFF -DNCNN_SSE2=ON -DNCNN_AVX2=OFF -DNCNN_AVX=OFF \
     -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_BENCHMARK=OFF ..
 cmake --build . -j 4
 cmake --build . --target install
 ```
 
 Pick `build-XYZ/install` folder for further usage.
+
+***
+
+### Build for AllWinner D1
+
+Download c906 toolchain package from https://occ.t-head.cn/community/download?id=3913221581316624384
+
+```shell
+tar -xf riscv64-linux-x86_64-20210512.tar.gz
+export RISCV_ROOT_PATH=/home/nihui/osd/riscv64-linux-x86_64-20210512
+```
+
+Build ncnn with riscv-v vector and simpleocv enabled:
+```shell
+mkdir -p build-c906
+cd build-c906
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/c906.toolchain.cmake \
+    -DCMAKE_BUILD_TYPE=relwithdebinfo -DNCNN_OPENMP=OFF -DNCNN_THREADS=OFF -DNCNN_RUNTIME_CPU=OFF -DNCNN_RVV=ON \
+    -DNCNN_SIMPLEOCV=ON -DNCNN_BUILD_EXAMPLES=ON ..
+cmake --build . -j 4
+cmake --build . --target install
+```
+
+Pick `build-c906/install` folder for further usage.
+
+You can upload binary inside `build-c906/examples` folder and run on D1 board for testing.
+
+***
+
+### Build for Loongson 2K1000
+
+For gcc version < 8.5, you need to fix msa.h header for workaround msa fmadd bug.
+
+Open ```/usr/lib/gcc/mips64el-linux-gnuabi64/8/include/msa.h```, find ```__msa_fmadd_w``` and apply changes as the following
+```c
+// #define __msa_fmadd_w __builtin_msa_fmadd_w
+#define __msa_fmadd_w(a, b, c) __builtin_msa_fmadd_w(c, b, a)
+```
+
+Build ncnn with mips msa and simpleocv enabled:
+```shell
+mkdir -p build
+cd build
+cmake -DNCNN_DISABLE_RTTI=ON -DNCNN_DISABLE_EXCEPTION=ON -DNCNN_RUNTIME_CPU=OFF -DNCNN_MSA=ON -DNCNN_MMI=ON -DNCNN_SIMPLEOCV=ON ..
+cmake --build . -j 2
+cmake --build . --target install
+```
+
+Pick `build/install` folder for further usage.
+
+You can run binary inside `build/examples` folder for testing.

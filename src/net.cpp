@@ -766,6 +766,7 @@ int NetPrivate::convert_layout(Mat& bottom_blob, const Layer* layer, const Optio
     }
     else
 #endif // NCNN_RVV
+#if NCNN_BF16
     if (opt.use_bf16_storage)
     {
         if (bottom_blob.elembits() == 32 && layer->support_bf16_storage)
@@ -780,6 +781,11 @@ int NetPrivate::convert_layout(Mat& bottom_blob, const Layer* layer, const Optio
             cast_bfloat16_to_float32(bottom_blob, bottom_blob_fp32, opt);
             bottom_blob = bottom_blob_fp32;
         }
+    }
+    else
+#endif // NCNN_BF16
+    {
+        // no type conversion
     }
     // *INDENT-ON*
     // clang-format on
@@ -800,8 +806,8 @@ int NetPrivate::convert_layout(Mat& bottom_blob, const Layer* layer, const Optio
         {
             if (elembits == 32)
             {
-#if NCNN_AVX2
-                if (elemcount % 8 == 0 && ncnn::cpu_support_x86_avx2())
+#if (NCNN_AVX2 || NCNN_AVX)
+                if (elemcount % 8 == 0 && (ncnn::cpu_support_x86_avx2() || ncnn::cpu_support_x86_avx()))
                     dst_elempack = 8;
                 else if (elemcount % 4 == 0)
                     dst_elempack = 4;
@@ -832,8 +838,14 @@ int NetPrivate::convert_layout(Mat& bottom_blob, const Layer* layer, const Optio
             }
             if (elembits == 8)
             {
+#if NCNN_RVV
+                const int packn = ncnn::cpu_riscv_vlenb() / 1;
+                if (elemcount % packn == 0)
+                    dst_elempack = packn;
+#else
                 if (elemcount % 8 == 0)
                     dst_elempack = 8;
+#endif
             }
         }
 
@@ -863,7 +875,7 @@ int NetPrivate::do_forward_layer(const Layer* layer, std::vector<Mat>& blob_mats
             // deep copy for inplace forward if data is shared
             if (layer->support_inplace && *bottom_blob_ref.refcount != 1)
             {
-                bottom_blob = bottom_blob_ref.clone();
+                bottom_blob = bottom_blob_ref.clone(opt.blob_allocator);
             }
         }
         if (bottom_blob.dims == 0)
@@ -916,7 +928,7 @@ int NetPrivate::do_forward_layer(const Layer* layer, std::vector<Mat>& blob_mats
                 // deep copy for inplace forward if data is shared
                 if (layer->support_inplace && *bottom_blob_ref.refcount != 1)
                 {
-                    bottom_blobs[i] = bottom_blob_ref.clone();
+                    bottom_blobs[i] = bottom_blob_ref.clone(opt.blob_allocator);
                 }
             }
             if (bottom_blobs[i].dims == 0)
@@ -2578,6 +2590,7 @@ int Extractor::extract(int blob_index, Mat& feat, int type)
     }
     else
 #endif // NCNN_ARM82
+#if NCNN_BF16
     if (d->opt.use_bf16_storage && (type == 0))
     {
         if (feat.elembits() == 16)
@@ -2586,6 +2599,14 @@ int Extractor::extract(int blob_index, Mat& feat, int type)
             cast_bfloat16_to_float32(feat, feat_fp32, d->opt);
             feat = feat_fp32;
         }
+    }
+    else
+#endif // NCNN_BF16
+    if (feat.elembits() == 8 && (type == 0))
+    {
+        Mat feat_fp32;
+        cast_int8_to_float32(feat, feat_fp32, d->opt);
+        feat = feat_fp32;
     }
     // *INDENT-ON*
     // clang-format on

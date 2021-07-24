@@ -3,6 +3,7 @@
 
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://raw.githubusercontent.com/Tencent/ncnn/master/LICENSE.txt) 
 [![Build Status](https://travis-ci.org/Tencent/ncnn.svg?branch=master)](https://travis-ci.org/Tencent/ncnn)
+[![download](https://img.shields.io/github/downloads/Tencent/ncnn/total.svg)](https://github.com/Tencent/ncnn/releases)
 [![codecov](https://codecov.io/gh/Tencent/ncnn/branch/master/graph/badge.svg)](https://codecov.io/gh/Tencent/ncnn)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/Tencent/ncnn.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Tencent/ncnn/context:cpp)
 
@@ -13,6 +14,7 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 ---
 
 ### 技术交流QQ群：637093648(超多大佬)  答案：卷卷卷卷卷
+### Pocky群（MLIR YES!）: 677104663(超多大佬)
 
 ### Telegram Group https://t.me/ncnnyes
 
@@ -49,7 +51,7 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 * Classical CNN: [VGG](https://github.com/BVLC/caffe/wiki/Model-Zoo#models-used-by-the-vgg-team-in-ilsvrc-2014) [AlexNet](https://github.com/BVLC/caffe/tree/9b891540183ddc834a02b2bd81b31afae71b2153/models/bvlc_alexnet) [GoogleNet](https://github.com/BVLC/caffe/tree/9b891540183ddc834a02b2bd81b31afae71b2153/models/bvlc_googlenet) Inception ...
 * Practical CNN: [ResNet](https://github.com/tornadomeet/ResNet) [DenseNet](https://github.com/liuzhuang13/DenseNet) [SENet](https://github.com/hujie-frank/SENet) [FPN](https://github.com/unsky/FPN) ...
 * Light-weight CNN: [SqueezeNet](https://github.com/forresti/SqueezeNet) [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md)/[V2/V3](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/README.md) [ShuffleNetV1](https://github.com/farmingyard/ShuffleNet)/[V2](https://github.com/opconty/keras-shufflenetV2) [MNasNet](https://github.com/tensorflow/models/tree/master/research/slim/nets/nasnet) ...
-* Face Detection: [MTCNN](https://github.com/ipazc/mtcnn) [RetinaFace](https://github.com/biubug6/Pytorch_Retinaface) ...
+* Face Detection: [MTCNN](https://github.com/ipazc/mtcnn) [RetinaFace](https://github.com/biubug6/Pytorch_Retinaface) [scrfd](https://github.com/nihui/ncnn-android-scrfd) ...
 * Detection: [VGG-SSD](https://github.com/lzx1413/CAFFE_SSD) [MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD) [SqueezeNet-SSD](https://github.com/chuanqi305/SqueezeNet-SSD) [MobileNetV2-SSDLite](https://github.com/chuanqi305/MobileNetv2-SSDLite) [MobileNetV3-SSDLite](https://github.com/XiaoyuHuang96/MobilenetV3SSDLite-tfkeras) ...
 * Detection: [Faster-RCNN](https://github.com/rbgirshick/py-faster-rcnn) [R-FCN](https://github.com/daijifeng001/R-FCN) ...
 * Detection: [YOLOV2](https://github.com/longcw/yolo2-pytorch) [YOLOV3](https://github.com/ultralytics/yolov3) [MobileNet-YOLOV3](https://github.com/eric612/MobileNet-YOLO) [YOLOV4](https://github.com/Tianxiaomo/pytorch-YOLOv4) [YOLOV5](https://github.com/ultralytics/yolov5) ...
@@ -61,7 +63,7 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 
 ### HowTo
 
-**[how to build ncnn library](https://github.com/Tencent/ncnn/wiki/how-to-build) on Linux / Windows / MacOS / Raspberry Pi3 / Android / NVIDIA Jetson / iOS / WebAssembly**
+**[how to build ncnn library](https://github.com/Tencent/ncnn/wiki/how-to-build) on Linux / Windows / MacOS / Raspberry Pi3 / Android / NVIDIA Jetson / iOS / WebAssembly / AllWinner D1 / Loongson 2K1000**
 
 * [Build for Linux / NVIDIA Jetson / Raspberry Pi3](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-linux)
 * [Build for Windows x64 using VS2017](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-windows-x64-using-visual-studio-community-2017)
@@ -71,6 +73,8 @@ ncnn 是一个为手机端极致优化的高性能神经网络前向计算框架
 * [Build for Android](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-android)
 * [Build for iOS on MacOS with xcode](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-ios-on-macos-with-xcode)
 * [Build for WebAssembly](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-webassembly)
+* [Build for AllWinner D1](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-allwinner-d1)
+* [Build for Loongson 2K1000](https://github.com/Tencent/ncnn/wiki/how-to-build#build-for-loongson-2k1000)
 
 **[download prebuild binary package for android and ios](https://github.com/Tencent/ncnn/releases)**
 

@@ -274,6 +274,8 @@ int main(int argc, char** argv)
 
     benchmark("efficientnet_b0", ncnn::Mat(224, 224, 3), opt);
 
+    benchmark("efficientnetv2_b0", ncnn::Mat(224, 224, 3), opt);
+
     benchmark("regnety_400m", ncnn::Mat(224, 224, 3), opt);
 
     benchmark("blazeface", ncnn::Mat(128, 128, 3), opt);
@@ -309,6 +311,8 @@ int main(int argc, char** argv)
     benchmark("mobilenetv2_yolov3", ncnn::Mat(352, 352, 3), opt);
 
     benchmark("yolov4-tiny", ncnn::Mat(416, 416, 3), opt);
+
+    benchmark("nanodet_m", ncnn::Mat(320, 320, 3), opt);
 
 #if NCNN_VULKAN
     delete g_blob_vkallocator;
