@@ -2,6 +2,9 @@
 
 # 如何加入技术交流QQ群？
 
+- 打开QQ→点击群聊搜索→搜索群号637093648→输入问题答案：卷卷卷卷卷→进入群聊→准备接受图灵测试（bushi）
+- 前往QQ搜索Pocky群：677104663(超多大佬)，问题答案：multi level intermediate representation
+
 # 如何看作者b站直播？
    
 - nihui的bilibili直播间：[水竹院落](https://live.bilibili.com/1264617)
