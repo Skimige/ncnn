@@ -163,12 +163,15 @@ set(pnnx_pass_level2_SRCS
     pass_level2/F_upsample_nearest.cpp
     pass_level2/F_upsample.cpp
     pass_level2/Tensor_contiguous.cpp
+    pass_level2/Tensor_expand.cpp
     pass_level2/Tensor_new_empty.cpp
     pass_level2/Tensor_repeat.cpp
     pass_level2/Tensor_reshape.cpp
     pass_level2/Tensor_select.cpp
     pass_level2/Tensor_slice.cpp
     pass_level2/Tensor_view.cpp
+    pass_level2/torch_amax.cpp
+    pass_level2/torch_amin.cpp
     pass_level2/torch_argmax.cpp
     pass_level2/torch_argmin.cpp
     pass_level2/torch_cat.cpp
@@ -177,15 +180,18 @@ set(pnnx_pass_level2_SRCS
     pass_level2/torch_clone.cpp
     pass_level2/torch_dequantize.cpp
     pass_level2/torch_flatten.cpp
+    pass_level2/torch_logsumexp.cpp
     pass_level2/torch_mean.cpp
     pass_level2/torch_normal.cpp
+    pass_level2/torch_prod.cpp
     pass_level2/torch_quantize_per_tensor.cpp
-    pass_level2/torch_sum.cpp
     pass_level2/torch_split.cpp
     pass_level2/torch_squeeze.cpp
+    pass_level2/torch_sum.cpp
     pass_level2/torch_permute.cpp
     pass_level2/torch_transpose.cpp
     pass_level2/torch_unsqueeze.cpp
+    pass_level2/torch_var.cpp
 
     pass_level2/nn_quantized_FloatFunctional.cpp
 )
@@ -356,12 +362,17 @@ set(pnnx_pass_ncnn_SRCS
     pass_ncnn/Tensor_reshape.cpp
     pass_ncnn/Tensor_slice.cpp
     pass_ncnn/Tensor_view.cpp
+    pass_ncnn/torch_amax.cpp
+    pass_ncnn/torch_amin.cpp
     pass_ncnn/torch_clamp.cpp
     pass_ncnn/torch_clone.cpp
     pass_ncnn/torch_flatten.cpp
+    pass_ncnn/torch_logsumexp.cpp
     pass_ncnn/torch_mean.cpp
     pass_ncnn/torch_permute.cpp
+    pass_ncnn/torch_prod.cpp
     pass_ncnn/torch_squeeze.cpp
+    pass_ncnn/torch_sum.cpp
     pass_ncnn/torch_transpose.cpp
     pass_ncnn/torch_unsqueeze.cpp
 )
