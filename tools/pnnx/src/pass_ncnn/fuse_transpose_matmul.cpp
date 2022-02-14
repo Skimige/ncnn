@@ -1,6 +1,6 @@
 // Tencent is pleased to support the open source community by making ncnn available.
 //
-// Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+// Copyright (C) 2022 THL A29 Limited, a Tencent company. All rights reserved.
 //
 // Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
 // in compliance with the License. You may obtain a copy of the License at
@@ -12,50 +12,55 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+#include "fuse_transpose_matmul.h"
+
 #include "pass_level2.h"
+
+#include <float.h>
 
 namespace pnnx {
 
-class F_relu : public GraphRewriterPass
+namespace ncnn {
+
+class fuse_transpose_matmul_pass : public GraphRewriterPass
 {
 public:
     const char* match_pattern_graph() const
     {
         return R"PNNXIR(7767517
-3 2
-pnnx.Input              input       0 1 input
-aten::relu              op_0        1 1 input out
+5 4
+pnnx.Input              input_a     0 1 a
+pnnx.Input              input_b     0 1 b
+Permute                 op_0        1 1 b bt 0=1
+MatMul                  op_1        2 1 a bt out
 pnnx.Output             output      1 0 out
 )PNNXIR";
     }
 
     const char* type_str() const
     {
-        return "F.relu";
+        return "MatMul";
+    }
+
+    const char* name_str() const
+    {
+        return "matmultransb";
+    }
+
+    void write(Operator* op, const std::map<std::string, Parameter>& /*captured_params*/, const std::map<std::string, Attribute>& /*captured_attrs*/) const
+    {
+        op->params["0"] = 1;
     }
 };
 
-REGISTER_GLOBAL_PNNX_GRAPH_REWRITER_PASS(F_relu, 10)
-
-class F_relu_1 : public GraphRewriterPass
+void fuse_transpose_matmul(Graph& graph)
 {
-public:
-    const char* match_pattern_graph() const
-    {
-        return R"PNNXIR(7767517
-3 2
-pnnx.Input              input       0 1 input
-aten::relu_             op_0        1 1 input out
-pnnx.Output             output      1 0 out
-)PNNXIR";
-    }
+    fuse_transpose_matmul_pass a;
+    int opindex = 0;
 
-    const char* type_str() const
-    {
-        return "F.relu";
-    }
-};
+    pnnx_graph_rewrite(graph, &a, opindex);
+}
 
-REGISTER_GLOBAL_PNNX_GRAPH_REWRITER_PASS(F_relu_1, 10)
+} // namespace ncnn
 
 } // namespace pnnx
