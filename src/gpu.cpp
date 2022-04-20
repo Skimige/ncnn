@@ -1080,7 +1080,7 @@ int create_gpu_instance()
         //         NCNN_LOGE("[%u] pipelineCacheUUID = %u", i, physicalDeviceProperties.pipelineCacheUUID);
 
         // mali
-        // t760 = 0x13b5 0x7500001
+        // t760 = 0x13b5 0x7500001 / 0x7501000
         // t860 = 0x13b5 0x8602000
         // t880 = 0x13b5 0x8800020
         // g31  = 0x13b5 0x70930000
@@ -1130,6 +1130,7 @@ int create_gpu_instance()
 
         if (physicalDeviceProperties.vendorID == 0x13b5
                 && (physicalDeviceProperties.deviceID == 0x7500001
+                    || physicalDeviceProperties.deviceID == 0x7501000
                     || physicalDeviceProperties.deviceID == 0x8602000
                     || physicalDeviceProperties.deviceID == 0x8800020
                     || physicalDeviceProperties.deviceID == 0x70930000
@@ -1803,6 +1804,9 @@ const ncnn::Packing_vulkan* VulkanDevicePrivate::get_utility_operator(int storag
     // enable pack8 for pack8to1/pack8to4
     opt.use_shader_pack8 = true;
 
+    // do not enable spirv-1.3 from cooperative matrix
+    opt.use_cooperative_matrix = false;
+
     opt.use_vulkan_compute = true;
 
     // cache uop pipeline as device member explicitly
@@ -1833,6 +1837,7 @@ void VulkanDevicePrivate::destroy_utility_operator()
     opt.use_vulkan_compute = true;
     opt.use_fp16_arithmetic = false;
     opt.use_int8_arithmetic = false;
+    opt.use_cooperative_matrix = false;
     opt.pipeline_cache = 0;
 
     // from buffer | image
