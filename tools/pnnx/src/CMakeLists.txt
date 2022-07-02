@@ -338,6 +338,7 @@ set(pnnx_pass_ncnn_SRCS
     pass_ncnn/fuse_deconvolutiondepthwise_activation.cpp
     pass_ncnn/fuse_innerproduct_activation.cpp
     pass_ncnn/fuse_transpose_matmul.cpp
+    pass_ncnn/insert_reshape_linear.cpp
     pass_ncnn/insert_reshape_pooling.cpp
 
     pass_ncnn/F_adaptive_avg_pool1d.cpp
@@ -534,9 +535,10 @@ else()
 endif()
 set_target_properties(pnnx PROPERTIES MACOSX_RPATH TRUE)
 
-install(TARGETS pnnx RUNTIME DESTINATION bin)
+include(GNUInstallDirs)
+install(TARGETS pnnx RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if (WIN32)
     file(GLOB TORCH_DLL "${TORCH_INSTALL_PREFIX}/lib/*.dll")
-    install(FILES ${TORCH_DLL} DESTINATION bin)
+    install(FILES ${TORCH_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
