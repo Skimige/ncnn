@@ -12,39 +12,10 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#include "pass_level1.h"
-
-#include "../utils.h"
+#include "ir.h"
 
 namespace pnnx {
 
-class ZeroPad2d : public FuseModulePass
-{
-public:
-    const char* match_type_str() const
-    {
-        return "__torch__.torch.nn.modules.padding.ZeroPad2d";
-    }
-
-    const char* type_str() const
-    {
-        return "nn.ZeroPad2d";
-    }
-
-    void write(Operator* op, const std::shared_ptr<torch::jit::Graph>& graph) const
-    {
-        const torch::jit::Node* pad = find_node_by_kind(graph, "aten::pad");
-        const torch::jit::Node* constant_pad_nd = find_node_by_kind(graph, "aten::constant_pad_nd");
-
-        if (!pad)
-        {
-            pad = constant_pad_nd;
-        }
-
-        op->params["padding"] = pad->namedInput("pad");
-    }
-};
-
-REGISTER_GLOBAL_PNNX_FUSE_MODULE_PASS(ZeroPad2d)
+void fuse_op1ton_unpack(Graph& graph);
 
 } // namespace pnnx

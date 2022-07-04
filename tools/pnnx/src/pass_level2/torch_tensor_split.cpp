@@ -1,6 +1,6 @@
 // Tencent is pleased to support the open source community by making ncnn available.
 //
-// Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+// Copyright (C) 2022 THL A29 Limited, a Tencent company. All rights reserved.
 //
 // Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
 // in compliance with the License. You may obtain a copy of the License at
@@ -16,47 +16,50 @@
 
 namespace pnnx {
 
-class F_gelu : public GraphRewriterPass
+class torch_tensor_split : public GraphRewriterPass
 {
 public:
     const char* match_pattern_graph() const
     {
         return R"PNNXIR(7767517
-3 2
-pnnx.Input              input       0 1 input
-aten::gelu              op_0        1 1 input out
-pnnx.Output             output      1 0 out
-)PNNXIR";
-    }
-
-    const char* type_str() const
-    {
-        return "F.gelu";
-    }
-};
-
-REGISTER_GLOBAL_PNNX_GRAPH_REWRITER_PASS(F_gelu, 10)
-
-class F_gelu_1 : public GraphRewriterPass
-{
-public:
-    const char* match_pattern_graph() const
-    {
-        return R"PNNXIR(7767517
-4 3
+5 4
 pnnx.Input              input_0     0 1 input
-pnnx.Input              input_1     0 1 approximate
-aten::gelu              op_0        2 1 input approximate out
+pnnx.Input              input_1     0 1 dim
+prim::Constant          op_0        0 1 sections value=%sections
+aten::tensor_split      op_1        3 1 input sections dim out
 pnnx.Output             output      1 0 out
 )PNNXIR";
     }
 
     const char* type_str() const
     {
-        return "F.gelu";
+        return "torch.tensor_split";
     }
 };
 
-REGISTER_GLOBAL_PNNX_GRAPH_REWRITER_PASS(F_gelu_1, 10)
+REGISTER_GLOBAL_PNNX_GRAPH_REWRITER_PASS(torch_tensor_split, 19)
+
+class torch_tensor_split_1 : public GraphRewriterPass
+{
+public:
+    const char* match_pattern_graph() const
+    {
+        return R"PNNXIR(7767517
+5 4
+pnnx.Input              input_0     0 1 input
+pnnx.Input              input_1     0 1 indices
+pnnx.Input              input_2     0 1 dim
+aten::tensor_split      op_0        3 1 input indices dim out
+pnnx.Output             output      1 0 out
+)PNNXIR";
+    }
+
+    const char* type_str() const
+    {
+        return "torch.tensor_split";
+    }
+};
+
+REGISTER_GLOBAL_PNNX_GRAPH_REWRITER_PASS(torch_tensor_split_1, 20)
 
 } // namespace pnnx
