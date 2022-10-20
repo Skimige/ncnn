@@ -1,6 +1,6 @@
 # Tencent is pleased to support the open source community by making ncnn available.
 #
-# Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2022 THL A29 Limited, a Tencent company. All rights reserved.
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -20,11 +20,16 @@ class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
 
+        self.act_0 = nn.GLU(dim=0)
+        self.act_1 = nn.GLU(dim=1)
+        self.act_2 = nn.GLU(dim=2)
+        self.act_3 = nn.GLU(dim=-1)
+
     def forward(self, x, y, z):
-        x = F.softmax(x, 0)
-        y = F.softmax(y, 1)
-        z = F.softmax(z, 2)
-        z2 = F.softmax(z, -1)
+        x = self.act_0(x)
+        y = self.act_1(y)
+        z = self.act_2(z)
+        z2 = self.act_3(z)
         return x, y, z, z2
 
 def test():
@@ -32,23 +37,23 @@ def test():
     net.eval()
 
     torch.manual_seed(0)
-    x = torch.rand(16)
-    y = torch.rand(2, 16)
-    z = torch.rand(3, 12, 16)
+    x = torch.rand(12)
+    y = torch.rand(12, 64)
+    z = torch.rand(12, 24, 64)
 
     a = net(x, y, z)
 
     # export torchscript
     mod = torch.jit.trace(net, (x, y, z))
-    mod.save("test_F_softmax.pt")
+    mod.save("test_nn_GLU.pt")
 
     # torchscript to pnnx
     import os
-    os.system("../../src/pnnx test_F_softmax.pt inputshape=[16],[2,16],[3,12,16]")
+    os.system("../../src/pnnx test_nn_GLU.pt inputshape=[12],[12,64],[12,24,64]")
 
     # ncnn inference
-    import test_F_softmax_ncnn
-    b = test_F_softmax_ncnn.test_inference()
+    import test_nn_GLU_ncnn
+    b = test_nn_GLU_ncnn.test_inference()
 
     for a0, b0 in zip(a, b):
         if not torch.allclose(a0, b0, 1e-4, 1e-4):

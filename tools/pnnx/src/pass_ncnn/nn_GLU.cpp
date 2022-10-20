@@ -1,6 +1,7 @@
 // Tencent is pleased to support the open source community by making ncnn available.
 //
-// Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+// Copyright (C) 2022 THL A29 Limited, a Tencent company. All rights reserved.
+//               2022 Xiaomi Corp.     (author: Fangjun Kuang)
 //
 // Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
 // in compliance with the License. You may obtain a copy of the License at
@@ -18,27 +19,27 @@ namespace pnnx {
 
 namespace ncnn {
 
-class F_softmax : public GraphRewriterPass
+class nn_GLU : public GraphRewriterPass
 {
 public:
     const char* match_pattern_graph() const
     {
         return R"PNNXIR(7767517
 3 2
-pnnx.Input              input       0 1 input
-F.softmax               op_0        1 1 input out dim=%dim
-pnnx.Output             output      1 0 out
+pnnx.Input           input          0 1 input
+nn.GLU               op_0           1 1 input out dim=%dim
+pnnx.Output          output         1 0 out
 )PNNXIR";
     }
 
     const char* type_str() const
     {
-        return "Softmax";
+        return "GLU";
     }
 
     const char* name_str() const
     {
-        return "softmax";
+        return "glu";
     }
 
     void write(Operator* op, const std::map<std::string, Parameter>& captured_params) const
@@ -48,7 +49,7 @@ pnnx.Output             output      1 0 out
         int axis = captured_params.at("dim").i;
         if (axis == batch_index)
         {
-            fprintf(stderr, "softmax along batch axis %d is not supported\n", batch_index);
+            fprintf(stderr, "glu along batch axis %d is not supported\n", batch_index);
             return;
         }
 
@@ -62,11 +63,10 @@ pnnx.Output             output      1 0 out
             axis -= 1;
 
         op->params["0"] = axis;
-        op->params["1"] = 1;
     }
 };
 
-REGISTER_GLOBAL_PNNX_NCNN_GRAPH_REWRITER_PASS(F_softmax, 20)
+REGISTER_GLOBAL_PNNX_NCNN_GRAPH_REWRITER_PASS(nn_GLU, 20)
 
 } // namespace ncnn
 
