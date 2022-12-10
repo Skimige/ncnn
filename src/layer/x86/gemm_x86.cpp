@@ -1577,7 +1577,7 @@ static void transpose_pack_B_tile(const Mat& B, Mat& BT, int j, int max_jj, int 
 #endif // __AVX__
         if (elempack == 4)
         {
-            const float* p0 = (const float*)B + k * B_hstep + (j + jj) * 4;
+            const float* p0 = (const float*)B + k / 4 * 4 * B_hstep + (j + jj) * 4;
 
             int kk = 0;
             for (; kk + 3 < max_kk; kk += 4)
@@ -1692,7 +1692,7 @@ static void transpose_pack_B_tile(const Mat& B, Mat& BT, int j, int max_jj, int 
 #endif // __AVX__
         if (elempack == 4)
         {
-            const float* p0 = (const float*)B + k * B_hstep + (j + jj) * 4;
+            const float* p0 = (const float*)B + k / 4 * 4 * B_hstep + (j + jj) * 4;
 
             int kk = 0;
             for (; kk + 3 < max_kk; kk += 4)
@@ -1781,7 +1781,7 @@ static void transpose_pack_B_tile(const Mat& B, Mat& BT, int j, int max_jj, int 
 #endif // __AVX__
         if (elempack == 4)
         {
-            const float* p0 = (const float*)B + k * B_hstep + (j + jj) * 4;
+            const float* p0 = (const float*)B + k / 4 * 4 * B_hstep + (j + jj) * 4;
 
             int kk = 0;
             for (; kk + 3 < max_kk; kk += 4)
@@ -1854,7 +1854,7 @@ static void transpose_pack_B_tile(const Mat& B, Mat& BT, int j, int max_jj, int 
 #endif // __AVX__
         if (elempack == 4)
         {
-            const float* p0 = (const float*)B + k * B_hstep + (j + jj) * 4;
+            const float* p0 = (const float*)B + k / 4 * 4 * B_hstep + (j + jj) * 4;
 
             int kk = 0;
             for (; kk + 3 < max_kk; kk += 4)
@@ -1917,7 +1917,7 @@ static void transpose_pack_B_tile(const Mat& B, Mat& BT, int j, int max_jj, int 
 #endif // __AVX__
         if (elempack == 4)
         {
-            const float* p0 = (const float*)B + k * B_hstep + (j + jj) * 4;
+            const float* p0 = (const float*)B + k / 4 * 4 * B_hstep + (j + jj) * 4;
 
             int kk = 0;
             for (; kk + 3 < max_kk; kk += 4)
@@ -6237,14 +6237,26 @@ static void get_optimal_tile_mnk(int M, int N, int K, int& TILE_M, int& TILE_N, 
     if (K > 0)
     {
         int nn_K = (K + TILE_K - 1) / TILE_K;
+#if __AVX512F__
+        TILE_K = std::min(TILE_K, ((K + nn_K - 1) / nn_K + 3) / 4 * 4);
+#elif __AVX__
+        TILE_K = std::min(TILE_K, ((K + nn_K - 1) / nn_K + 1) / 2 * 2);
+#else
         TILE_K = std::min(TILE_K, (K + nn_K - 1) / nn_K);
+#endif
     }
 
     if (opt.num_threads > 1)
     {
-        TILE_M = std::min(TILE_M, (TILE_M / opt.num_threads + 15) / 16 * 16);
-        TILE_N = std::min(TILE_N, (TILE_N / opt.num_threads + 11) / 12 * 12);
+        TILE_M = std::min(TILE_M, (std::max(1, TILE_M / opt.num_threads) + 15) / 16 * 16);
+        TILE_N = std::min(TILE_N, (std::max(1, TILE_N / opt.num_threads) + 11) / 12 * 12);
+#if __AVX512F__
+        TILE_K = std::min(TILE_K, (std::max(1, TILE_K / opt.num_threads) + 3) / 4 * 4);
+#elif __AVX__
+        TILE_K = std::min(TILE_K, (std::max(1, TILE_K / opt.num_threads) + 1) / 2 * 2);
+#else
         TILE_K = std::min(TILE_K, std::max(1, TILE_K / opt.num_threads));
+#endif
     }
 }
 
