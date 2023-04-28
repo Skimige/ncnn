@@ -29,6 +29,7 @@ int MultiHeadAttention::load_param(const ParamDict& pd)
     weight_data_size = pd.get(2, 0);
     kdim = pd.get(3, embed_dim);
     vdim = pd.get(4, embed_dim);
+    attn_mask = pd.get(5, 0);
 
     return 0;
 }
@@ -74,8 +75,9 @@ int MultiHeadAttention::load_model(const ModelBin& mb)
 int MultiHeadAttention::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const
 {
     const Mat& q_blob = bottom_blobs[0];
-    const Mat& k_blob = bottom_blobs.size() == 1 ? q_blob : bottom_blobs[1];
-    const Mat& v_blob = bottom_blobs.size() == 1 ? q_blob : bottom_blobs.size() == 2 ? k_blob : bottom_blobs[2];
+    const Mat& k_blob = (bottom_blobs.size() == 1 || (bottom_blobs.size() == 2 && attn_mask)) ? q_blob : bottom_blobs[1];
+    const Mat& v_blob = (bottom_blobs.size() == 1 || (bottom_blobs.size() == 2 && attn_mask)) ? q_blob : (bottom_blobs.size() == 2 || (bottom_blobs.size() == 3 && attn_mask)) ? k_blob : bottom_blobs[2];
+    const Mat& attn_mask_blob = attn_mask ? bottom_blobs[bottom_blobs.size() - 1] : Mat();
 
     const int src_seqlen = q_blob.h;
     const int dst_seqlen = k_blob.h;
@@ -96,7 +98,7 @@ int MultiHeadAttention::forward(const std::vector<Mat>& bottom_blobs, std::vecto
 
     Mat xqkv(embed_dim_per_head, num_heads, src_seqlen, 4u, opt.workspace_allocator);
 
-    const float inv_sqrt_embed_dim_per_head = 1.f / sqrt(embed_dim_per_head);
+    const float inv_sqrt_embed_dim_per_head = 1.f / sqrtf(embed_dim_per_head);
 
     #pragma omp parallel for num_threads(opt.num_threads)
     for (int q = 0; q < num_heads; q++)
@@ -202,6 +204,24 @@ int MultiHeadAttention::forward(const std::vector<Mat>& bottom_blobs, std::vecto
             }
         }
 
+        // xqk = xqk + mask
+        if (attn_mask)
+        {
+            const Mat& maskm = attn_mask_blob.dims == 3 ? attn_mask_blob.channel(q) : attn_mask_blob;
+            Mat outm = xqk.channel(q);
+
+            for (int i = 0; i < src_seqlen; i++)
+            {
+                const float* mptr = maskm.row(i);
+                float* outptr = outm.row(i);
+
+                for (int j = 0; j < dst_seqlen; j++)
+                {
+                    outptr[j] += mptr[j];
+                }
+            }
+        }
+
         // softmax(xqk)
         {
             Mat outm = xqk.channel(q);
@@ -219,7 +239,7 @@ int MultiHeadAttention::forward(const std::vector<Mat>& bottom_blobs, std::vecto
                 float sum = 0.f;
                 for (int j = 0; j < dst_seqlen; j++)
                 {
-                    ptr[j] = (float)(exp(ptr[j] - max));
+                    ptr[j] = (float)(expf(ptr[j] - max));
                     sum += ptr[j];
                 }
 
