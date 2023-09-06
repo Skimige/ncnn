@@ -214,6 +214,7 @@ set(pnnx_pass_level2_SRCS
     pass_level2/torch_clone.cpp
     pass_level2/torch_complex.cpp
     pass_level2/torch_cross.cpp
+    pass_level2/torch_cumprod.cpp
     pass_level2/torch_cumsum.cpp
     pass_level2/torch_dequantize.cpp
     pass_level2/torch_einsum.cpp
@@ -244,6 +245,7 @@ set(pnnx_pass_level2_SRCS
     pass_level2/torch_normal.cpp
     pass_level2/torch_ones.cpp
     pass_level2/torch_ones_like.cpp
+    pass_level2/torch_positive.cpp
     pass_level2/torch_prod.cpp
     pass_level2/torch_quantize_per_tensor.cpp
     pass_level2/torch_randn.cpp
