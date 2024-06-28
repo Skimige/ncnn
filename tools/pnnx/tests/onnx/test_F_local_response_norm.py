@@ -1,6 +1,6 @@
 # Tencent is pleased to support the open source community by making ncnn available.
 #
-# Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2024 THL A29 Limited, a Tencent company. All rights reserved.
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -20,20 +20,15 @@ class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
 
-        self.ln_0 = nn.LayerNorm(64)
-        self.ln_0.weight = nn.Parameter(torch.rand(64))
-        self.ln_0.bias = nn.Parameter(torch.rand(64))
-        self.ln_1 = nn.LayerNorm(normalized_shape=(24,64), eps=1e-2, elementwise_affine=False)
-
     def forward(self, x, y, z):
-        x = self.ln_0(x)
-        x = self.ln_1(x)
+        x = F.local_response_norm(x, 3)
+        x = F.local_response_norm(x, size=5, alpha=0.001, beta=0.8, k=0.9)
 
-        y = self.ln_0(y)
-        y = self.ln_1(y)
+        y = F.local_response_norm(y, 4)
+        y = F.local_response_norm(y, size=4, alpha=0.01, beta=0.2, k=1.9)
 
-        z = self.ln_0(z)
-        z = self.ln_1(z)
+        z = F.local_response_norm(z, 5)
+        z = F.local_response_norm(z, size=3, alpha=0.1, beta=0.3, k=0.2)
         return x, y, z
 
 def test():
@@ -41,23 +36,22 @@ def test():
     net.eval()
 
     torch.manual_seed(0)
-    x = torch.rand(1, 24, 64)
-    y = torch.rand(1, 12, 24, 64)
-    z = torch.rand(1, 12, 16, 24, 64)
+    x = torch.rand(1, 12, 24)
+    y = torch.rand(2, 3, 12, 16)
+    z = torch.rand(1, 10, 12, 16, 24)
 
     a0, a1, a2 = net(x, y, z)
 
-    # export torchscript
-    mod = torch.jit.trace(net, (x, y, z))
-    mod.save("test_nn_LayerNorm.pt")
+    # export onnx
+    torch.onnx.export(net, (x, y, z), "test_F_local_response_norm.onnx")
 
-    # torchscript to pnnx
+    # onnx to pnnx
     import os
-    os.system("../src/pnnx test_nn_LayerNorm.pt inputshape=[1,24,64],[1,12,24,64],[1,12,16,24,64]")
+    os.system("../../src/pnnx test_F_local_response_norm.onnx inputshape=[1,12,24],[2,3,12,16],[1,10,12,16,24]")
 
     # pnnx inference
-    import test_nn_LayerNorm_pnnx
-    b0, b1, b2 = test_nn_LayerNorm_pnnx.test_inference()
+    import test_F_local_response_norm_pnnx
+    b0, b1, b2 = test_F_local_response_norm_pnnx.test_inference()
 
     return torch.equal(a0, b0) and torch.equal(a1, b1) and torch.equal(a2, b2)
 

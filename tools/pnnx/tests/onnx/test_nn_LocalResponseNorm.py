@@ -1,6 +1,6 @@
 # Tencent is pleased to support the open source community by making ncnn available.
 #
-# Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+# Copyright (C) 2024 THL A29 Limited, a Tencent company. All rights reserved.
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -20,10 +20,8 @@ class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
 
-        self.ln_0 = nn.LayerNorm(64)
-        self.ln_0.weight = nn.Parameter(torch.rand(64))
-        self.ln_0.bias = nn.Parameter(torch.rand(64))
-        self.ln_1 = nn.LayerNorm(normalized_shape=(24,64), eps=1e-2, elementwise_affine=False)
+        self.ln_0 = nn.LocalResponseNorm(3)
+        self.ln_1 = nn.LocalResponseNorm(size=5, alpha=0.001, beta=0.8, k=0.9)
 
     def forward(self, x, y, z):
         x = self.ln_0(x)
@@ -47,17 +45,16 @@ def test():
 
     a0, a1, a2 = net(x, y, z)
 
-    # export torchscript
-    mod = torch.jit.trace(net, (x, y, z))
-    mod.save("test_nn_LayerNorm.pt")
+    # export onnx
+    torch.onnx.export(net, (x, y, z), "test_nn_LocalResponseNorm.onnx")
 
-    # torchscript to pnnx
+    # onnx to pnnx
     import os
-    os.system("../src/pnnx test_nn_LayerNorm.pt inputshape=[1,24,64],[1,12,24,64],[1,12,16,24,64]")
+    os.system("../../src/pnnx test_nn_LocalResponseNorm.onnx inputshape=[1,24,64],[1,12,24,64],[1,12,16,24,64]")
 
     # pnnx inference
-    import test_nn_LayerNorm_pnnx
-    b0, b1, b2 = test_nn_LayerNorm_pnnx.test_inference()
+    import test_nn_LocalResponseNorm_pnnx
+    b0, b1, b2 = test_nn_LocalResponseNorm_pnnx.test_inference()
 
     return torch.equal(a0, b0) and torch.equal(a1, b1) and torch.equal(a2, b2)
 
