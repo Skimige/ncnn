@@ -1417,6 +1417,11 @@ bool GpuInfo::support_int8_arithmetic() const
     return d->queryFloat16Int8Features.shaderInt8;
 }
 
+bool GpuInfo::support_fp16_image() const
+{
+    return d->physicalDevicefeatures.shaderStorageImageExtendedFormats;
+}
+
 bool GpuInfo::support_ycbcr_conversion() const
 {
     return d->querySamplerYcbcrConversionFeatures.samplerYcbcrConversion;
@@ -4932,11 +4937,11 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
             char defstr[256];
             if (def.type == 1)
             {
-                sprintf(defstr, "%uu", def.u8);
+                sprintf(defstr, "%u", def.u8);
             }
             if (def.type == 2)
             {
-                sprintf(defstr, "%uu", def.u32);
+                sprintf(defstr, "%u", def.u32);
             }
             if (def.type == 3)
             {
@@ -4951,7 +4956,7 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
                 else
                 {
                     uint32_t u32 = def.u64 > UINT_MAX ? UINT_MAX : (uint32_t)def.u64;
-                    sprintf(defstr, "%uu", u32);
+                    sprintf(defstr, "%u", u32);
                 }
             }
             if (def.type == 5)
@@ -4969,18 +4974,18 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
 
         if (def.type == 0)
         {
-            define_macro_data += std::string("#define __ncnn_") + key + " \"" + def.s + "\"\n";
+            define_macro_data += std::string("#define ncnn_") + key + " \"" + def.s + "\"\n";
         }
         else
         {
             char defstr[256];
             if (def.type == 1)
             {
-                sprintf(defstr, "%uu", def.u8);
+                sprintf(defstr, "%u", def.u8);
             }
             if (def.type == 2)
             {
-                sprintf(defstr, "%uu", def.u32);
+                sprintf(defstr, "%u", def.u32);
             }
             if (def.type == 3)
             {
@@ -4995,7 +5000,7 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
                 else
                 {
                     uint32_t u32 = def.u64 > UINT_MAX ? UINT_MAX : (uint32_t)def.u64;
-                    sprintf(defstr, "%uu", u32);
+                    sprintf(defstr, "%u", u32);
                 }
             }
             if (def.type == 5)
@@ -5003,7 +5008,7 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
                 sprintf(defstr, "%e", def.f32);
             }
 
-            define_macro_data += std::string("#define __ncnn_") + key + " " + defstr + "\n";
+            define_macro_data += std::string("#define ncnn_") + key + " " + defstr + "\n";
         }
     }
 
@@ -5016,7 +5021,7 @@ int compile_spirv_module(const char* comp_data, int comp_data_size, const Option
     if (opt.use_fp16_storage)
     {
         custom_exts += "#extension GL_EXT_shader_16bit_storage: require\n";
-        // custom_exts += "struct sfpvec8 { f16vec4 abcd; f16vec4 efgh; };\n";
+        custom_exts += "struct sfpvec8 { f16vec4 abcd; f16vec4 efgh; };\n";
     }
     if (opt.use_fp16_arithmetic)
     {
